@@ -1,0 +1,8 @@
+" added by Liyadong
+
+Bundle 'scrooloose/nerdcommenter'
+Bundle 'mbbill/desertEx'
+Bundle 'kevinw/pyflakes-vim'
+Bundle 'hallison/vim-markdown'
+
+Bundle 'python.vim--Vasiliev'

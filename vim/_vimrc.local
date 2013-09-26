@@ -1,0 +1,155 @@
+set nocursorline " don't highlight current line
+
+" keyboard shortcuts
+inoremap jj <ESC>
+
+" gui settings
+if (&t_Co == 256 || has('gui_running'))
+  if ($TERM_PROGRAM == 'iTerm.app')
+    colorscheme solarized
+  else
+    colorscheme desert
+  endif
+endif
+
+"internationalization
+"I only work in Win2k Chinese version
+if has("multi_byte")
+  set termencoding=chinese
+  set encoding=cp936
+  set fileencodings=ucs-bom,utf-8,cp936
+endif
+
+if has("gui_running")
+  set guioptions-=T
+endif
+
+colorscheme desertEx
+
+""""""""""""""""""""""""""""""
+" => Statusline
+""""""""""""""""""""""""""""""
+"Format the statusline
+" Nice statusbar
+set laststatus=2
+set statusline=
+set statusline+=%2*%-3.3n%0*\ " buffer number
+set statusline+=%f\ " file name
+set statusline+=%h%1*%m%r%w%0* " flag
+set statusline+=[
+if v:version >= 600
+  set statusline+=%{strlen(&ft)?&ft:'none'}, " filetype
+  set statusline+=%{&encoding}, " encoding
+endif
+set statusline+=%{&fileformat}] " file format
+if filereadable(expand("$VIM/vimfiles/plugin/vimbuddy.vim"))
+  set statusline+=\ %{VimBuddy()} " vim buddy
+endif
+set statusline+=%= " right align
+set statusline+=%2*0x%-8B\ " current char
+set statusline+=%-14.(%l,%c%V%)\ %<%P " offset
+
+" special statusbar for special window
+if has("autocmd")
+au FileType qf
+\if &buftype == "quickfix" |
+\  setlocal statusline=%2*%-3.3n%0* |
+\  setlocal statusline+=\ \[Compiler\ Messages\] |
+\  setlocal statusline+=%=%2*\ %<%P |
+\endif
+
+fun! FixMiniBufExplorerTitle()
+  if "-MiniBufExplorer-" == bufname("%")
+    setlocal statusline=%2*%-3.3n%0*
+    setlocal statusline+=\[Buffers\]
+    setlocal statusline+=%=%2*\ %<%P
+  endif
+endfun
+
+if v:version>=600
+  au BufWinEnter *
+  \ let oldwinnr=winnr() |
+  \ windo call FixMiniBufExplorerTitle() |
+  \ exec oldwinnr . " wincmd w"
+  endif
+endif
+
+" Nice window title
+if has('title') && (has('gui_running') || &title)
+  set titlestring=
+  set titlestring+=%f\ " file name
+  set titlestring+=%h%m%r%w " flag
+  set titlestring+=\ -\ %{v:progname} " program name
+endif
+
+set guifont=Arial_monospaced_for_SAP:h9:cANSI
+set guifont=Yahei_Mono:h10.5:cGB2312
+
+"对coffee-script和jade只缩进两格
+au BufNewFile,BufReadPost *.iced setl shiftwidth=2 expandtab
+au BufNewFile,BufReadPost *.coffee setl shiftwidth=2 expandtab
+au BufNewFile,BufReadPost *.jade setl shiftwidth=2 expandtab
+au BufNewFile,BufReadPost *.js setl shiftwidth=2 expandtab
+
+:set dir=d:\\Program\ Files\\Vim\\tmp
+:set backupdir=d:\\Program\ Files\\Vim\\backup  
+
+"使用改进的更加适合面向对象语言的taglist
+nmap <silent> <F3> :TagbarToggle<CR>
+let g:tagbar_ctags_bin = 'ctags'
+let g:tagbar_width = 30
+
+
+"对NERD_commenter的设置
+let NERDShutUp=1
+"支持单行和多行的选择，//格式
+map <c-h> ,c<space>
+
+"==========================================================================================
+"我添加的
+"进行版权声明的设置
+"添加或更新头
+map <F4> ms:call TitleDet()<cr>'s
+function AddTitle()
+    call append(0,"/*=============================================================================")
+    call append(1,"# ")
+    call append(2,"# Author: ***")
+    call append(3,"# QQ: ***")
+    call append(4,"# Email: ***@gmail.com")
+    call append(5,"#")
+    call append(6,"# Last modified: ".strftime("%Y-%m-%d %H:%M"))
+    call append(7,"#")
+    call append(8,"# Filename: ".expand("%:t"))
+    call append(9,"#")
+    call append(10,"# Description: ")
+    call append(11,"#")
+    call append(12,"=============================================================================*/")
+    echohl WarningMsg | echo "Successful in adding the copyright." | echohl None
+endf
+"更新最近修改时间和文件名
+function UpdateTitle()
+    normal m'
+    execute '/# *Last modified:/s@:.*$@\=strftime(":\t%Y-%m-%d %H:%M")@'
+    normal "
+    normal mk
+    execute '/# *Filename:/s@:.*$@\=":\t\t".expand("%:t")@'
+    execute "noh"
+    normal 'k
+    echohl WarningMsg | echo "Successful in updating the copy right." | echohl None
+endfunction
+"判断前10行代码里面，是否有Last modified这个单词，
+"如果没有的话，代表没有添加过作者信息，需要新添加；
+"如果有的话，那么只需要更新即可
+function TitleDet()
+    let n=1
+"    默认为添加
+    while n < 10
+        let line = getline(n)
+        if line =~ '^\#\s*\S*Last\smodified:\S*.*$'
+            call UpdateTitle()
+            return
+        endif
+        let n = n + 1
+    endwhile
+    call AddTitle()
+endfunction
